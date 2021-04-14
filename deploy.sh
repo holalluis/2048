@@ -1,8 +1,9 @@
 #!/bin/bash
 
-#git
-#git add *
-#git commit -am 'update'
+git
+git add *
+git commit -am 'update'
+git push
 
 #desplega al servidor
 # -h  human readable format
