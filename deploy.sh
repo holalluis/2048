@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git
+#git
 git add *
 git commit -am 'update'
 git push
