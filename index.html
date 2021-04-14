@@ -1,0 +1,263 @@
+<!doctype html><html><head><meta charset=utf8>
+  <title>2048</title>
+  <!--
+    development version, includes helpful console warnings
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    production version, optimized for size and speed
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      background:#faf8ef;
+      color:#776e65;
+      font-family:"Clear Sans", "Helvetica Neue", Arial, sans-serif;
+      font-size:30px;
+      margin-bottom:80px;
+    }
+
+    /*animació aparèixer*/
+    @keyframes appear {
+      0%   { opacity: 0; transform: scale(0); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    td.appear {
+      animation:appear 200ms ease 100ms;
+      animation-fill-mode:backwards;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+  </style>
+</head><body onkeyup="app.mou(event)">
+<h1 style="text-align:center">2048</h1>
+<div id=app>
+  <table style="margin:auto">
+    <tr v-for="j in rows">
+      <td v-for="i in cols" :style="estils[get_valor(i,j)]" :x="i" :y="j">
+        <!--
+        {{i}},{{j}} <br> <br>
+        -->
+        <div v-if="get_casella(i,j)">
+          {{ get_valor(i,j) }}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <p style="text-align:center;width:50%;margin:auto;margin-top:20px">
+    <b>COM ES JUGA</b>: fes servir les fletxes per moure les caselles. Les
+    caselles amb el mateix número es fusionaran quan es toquin. Fusiona-les fins a
+    arribar a 2048!
+  </p>
+</div>
+
+<script>
+  class Casella{
+    constructor(x,y,valor){
+      this.x=x;
+      this.y=y;
+      this.valor=valor;
+    }
+
+    fusiona(casella){
+      if(casella.valor != this.valor) return;
+      casella.valor *= 2;
+      let index = caselles.indexOf(this);
+      caselles.splice(index,1);
+    }
+
+    mou_esquerra(){
+      if(this.x==1) return;
+
+      //mira la casella de l'esquerra
+      let c = app.get_casella(this.x-1, this.y);
+      if(!c){
+        this.x--;
+        //torna a intentar moure't
+        this.mou_esquerra();
+      }else{
+        this.fusiona(c);
+      }
+    }
+    mou_dreta(){
+      if(this.x==app.cols) return;
+
+      //mira la casella de la dreta
+      let c = app.get_casella(this.x+1, this.y);
+      if(!c){
+        this.x++;
+        //torna a intentar moure't
+        this.mou_dreta();
+      }else{
+        this.fusiona(c);
+      }
+    }
+    mou_amunt(){
+      if(this.y==1) return;
+
+      //mira la casella de dalt
+      let c = app.get_casella(this.x, this.y-1);
+      if(!c){
+        this.y--;
+        //torna a intentar moure't
+        this.mou_amunt();
+      }else{
+        this.fusiona(c);
+      }
+    }
+    mou_avall(){
+      if(this.y==app.rows) return;
+
+      //mira la casella de baix
+      let c = app.get_casella(this.x, this.y+1);
+      if(!c){
+        this.y++;
+        //torna a intentar moure't
+        this.mou_avall();
+      }else{
+        this.fusiona(c);
+      }
+    }
+  }
+
+  let caselles=[
+    new Casella(2,1,2),
+    new Casella(4,1,2),
+  ];
+
+  let app = new Vue({
+    el:"#app",
+    data:{
+      rows:4,
+      cols:4,
+      caselles,
+      estils:{
+        "2"   :{                 background:"#eee4da"},
+        "4"   :{                 background:"#eee1c9"},
+        "8"   :{color:"#f9f6f2", background:"#f3b27a"},
+        "16"  :{color:"#f9f6f2", background:"#f69664"},
+        "32"  :{color:"#f9f6f2", background:"#f77c5f"},
+        "64"  :{color:"#f9f6f2", background:"#f75f3b"},
+        "128" :{color:"#f9f6f2", background:"#edd073"},
+        "256" :{color:"#f9f6f2", background:"#edcc62"},
+        "512" :{color:"#f9f6f2", background:"#edc950"},
+        "1024":{color:"#f9f6f2", background:"#edc53f", fontSize:"smaller"},
+        "2048":{color:"#f9f6f2", background:"#edc22e", fontSize:"smaller"},
+      },
+    },
+    methods:{
+      get_casella(x,y){
+        return caselles.find(c => c.x==x && c.y==y);
+      },
+
+      get_valor(x,y){
+        let c=this.get_casella(x,y);
+        if(c){
+          return c.valor;
+        }else{
+          return 0;
+        }
+      },
+
+      mou_tot_esquerra(){
+        //mou d'esquerra a dreta
+        for(let x=1;x<=this.cols;x++){
+          this.caselles.filter(c=>c.x==x).forEach(c=>c.mou_esquerra());
+        }
+      },
+
+      mou_tot_dreta(){
+        //mou de dreta a esquerra
+        for(let x=this.cols;x>=1;x--){
+          this.caselles.filter(c=>c.x==x).forEach(c=>c.mou_dreta());
+        }
+      },
+
+      mou_tot_amunt(){
+        //mou de dalt a baix
+        for(let y=1;y<=this.rows;y++){
+          this.caselles.filter(c=>c.y==y).forEach(c=>c.mou_amunt());
+        }
+      },
+
+      mou_tot_avall(){
+        //mou de baix a dalt
+        for(let y=this.rows;y>=1;y--){
+          this.caselles.filter(c=>c.y==y).forEach(c=>c.mou_avall());
+        }
+      },
+
+      mou(e){
+        let key = e.key;
+        //console.log(key);
+        switch(key){
+          case 'ArrowLeft':  this.mou_tot_esquerra(); break;
+          case 'ArrowRight': this.mou_tot_dreta(); break;
+          case 'ArrowUp':    this.mou_tot_amunt(); break;
+          case 'ArrowDown':  this.mou_tot_avall(); break;
+        };
+        this.nova_casella();
+      },
+
+      nova_casella(){
+        //nova casella a posició lliure aleatòria
+        let x = Math.ceil(Math.random()*this.cols);
+        let y = Math.ceil(Math.random()*this.cols);
+        if(this.get_casella(x,y)){
+          this.nova_casella();
+          return;
+        }else{
+          this.caselles.push(new Casella(x,y,2));
+
+          //animació
+          document.querySelectorAll('td').forEach(td=>{
+            td.classList.remove('appear');
+          });
+
+          let td = document.querySelector(`td[x="${x}"][y="${y}"]`);
+          td.classList.add('appear');
+        }
+      },
+
+      comprova_game_over(){
+        //TODO
+        //comprova si totes les caselles tenen casella: GAME OVER
+        for(let i=1;i<=this.cols;i++){
+          for(let j=1;i<=this.rows;i++){
+            if(!this.get_casella(i,j)){
+              return false;
+            }
+          }
+        }
+        return true;
+      },
+    },
+  });
+</script>
+
+<style>
+  table {
+    border-collapse:collapse;
+  }
+  table td {
+    width:100px;
+    height:100px;
+    text-align:center;
+    font-size:50px;
+    font-weight:bold;
+    box-shadow:0 0 30px 10px rgba(243, 215, 116, 0), inset 0 0 0 1px rgba(255, 255, 255, 0);
+    border:4px solid #776e65;
+  }
+</style>
